@@ -1,0 +1,50 @@
+# template permet de compter le nombre d'identifiants uniques (servedIsdn) dans un intervalle de temps donné et pour un type spécifique de CDR.
+
+# Tu enregistres un template de requête sous le nom count_served_isdn dans Elasticsearch.
+
+POST _scripts/count_served_isdn
+{
+  "script": {
+    "lang": "mustache",
+    "source": {
+      "size": 0,
+      "track_total_hits": false,
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "range": {
+                "dateTime": {
+                  "gte": "{{start_date}}",
+                  "lt": "{{end_date}}"
+                }
+              }
+            },
+            {
+              "terms": {
+                "cdrType.keyword": [
+                  "{{cdr_type}}"
+                ]
+              }
+            },
+            {
+              "exists": {
+                "field": "servedIsdn.keyword"
+              }
+            }
+          ]
+        }
+      },
+      "aggs": {
+        "countServedIsdn": {
+          "cardinality": {
+            "field": "servedIsdn.keyword"
+          },
+          "meta": {
+            "cache": true
+          }
+        }
+      }
+    }
+  }
+}
